@@ -13,6 +13,8 @@ go get github.com/vearne/gin-timeout
 package main
 
 import (
+	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vearne/gin-timeout"
 	"log"
@@ -30,8 +32,11 @@ func main() {
 	// create a handler that will last 1 seconds
 	engine.GET("/short", short)
 
-	// create a route that will last 5 seconds
+	// create a handler that will last 5 seconds
 	engine.GET("/long", long)
+
+	// create a handler that will last 5 seconds but can be canceled.
+	engine.GET("/long2", long2)
 
 	// run the server
 	log.Fatal(engine.Run(":8080"))
@@ -46,6 +51,23 @@ func long(c *gin.Context) {
 	time.Sleep(3 * time.Second)
 	c.JSON(http.StatusOK, gin.H{"hello": "long"})
 }
+
+func long2(c *gin.Context) {
+	if doSomething(c.Request.Context()) {
+		c.JSON(http.StatusOK, gin.H{"hello": "long2"})
+	}
+}
+
+func doSomething(ctx context.Context) bool {
+	select {
+	case <-ctx.Done():
+		fmt.Println("doSomething is canceled.")
+		return false
+	case <-time.After(5 * time.Second):
+		fmt.Println("doSomething is done.")
+		return true
+	}
+}
 ```
 
 ### Output 
@@ -59,12 +81,21 @@ Content-Type: text/plain; charset=utf-8
 {"code":"E509","msg":"http: Handler timeout"}%
 ```
 ```
+╰─$ curl -i http://localhost:8080/long2
+HTTP/1.1 503 Service Unavailable
+Date: Fri, 12 Jun 2020 12:31:14 GMT
+Content-Length: 45
+Content-Type: text/plain; charset=utf-8
+
+{"code":"E509","msg":"http: Handler timeout"}
+```
+
+```
 ╰─$ curl -i http://localhost:8080/short
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
-Date: Thu, 11 Jun 2020 06:34:13 GMT
+Date: Fri, 12 Jun 2020 12:32:13 GMT
 Content-Length: 17
 
 {"hello":"short"}
 ```
-
