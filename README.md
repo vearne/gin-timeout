@@ -58,6 +58,8 @@ func long2(c *gin.Context) {
 	}
 }
 
+// A cancelCtx can be canceled. 
+// When canceled, it also cancels any children that implement canceler.
 func doSomething(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
