@@ -19,6 +19,8 @@ type TimeoutWriter struct {
 	timedOut    bool
 	wroteHeader bool
 	code        int
+
+	defaultMsg string
 }
 
 func (tw *TimeoutWriter) Write(b []byte) (int, error) {
@@ -35,7 +37,7 @@ func (tw *TimeoutWriter) WriteHeader(code int) {
 	checkWriteHeaderCode(code)
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
-	if tw.timedOut || tw.wroteHeader {
+	if tw.timedOut {
 		return
 	}
 	tw.writeHeader(code)
@@ -50,6 +52,13 @@ func (tw *TimeoutWriter) WriteHeaderNow() {}
 
 func (tw *TimeoutWriter) Header() http.Header {
 	return tw.h
+}
+
+func (tw *TimeoutWriter) errorBody() string {
+	if tw.defaultMsg != "" {
+		return tw.defaultMsg
+	}
+	return "<html><head><title>Timeout</title></head><body><h1>Timeout</h1></body></html>"
 }
 
 func checkWriteHeaderCode(code int) {

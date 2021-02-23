@@ -1,18 +1,3 @@
-# gin-timeout
-Timeout Middleware for Gin framework
-
-### Thanks
-Inspired by golang source code [http.TimeoutHandler](https://github.com/golang/go/blob/5f3dabbb79fb3dc8eea9a5050557e9241793dce3/src/net/http/server.go#L3255)
-
-### Usage
-Download and install using go module:
-```
-export GO111MODULE=on
-go get github.com/vearne/gin-timeout
-```
-
-### Example
-```
 package main
 
 import (
@@ -30,7 +15,7 @@ func main() {
 	engine := gin.Default()
 
 	// add timeout middleware with 2 second duration
-	engine.Use(timeout.Timeout(time.Second * 2))
+	engine.Use(timeout.Timeout(time.Second*2, `{"code": -1, "msg":"http: Handler timeout"}`))
 
 	// create a handler that will last 1 seconds
 	engine.GET("/short", short)
@@ -40,6 +25,8 @@ func main() {
 
 	// create a handler that will last 5 seconds but can be canceled.
 	engine.GET("/long2", long2)
+
+	engine.GET("/boundary", boundary)
 
 	// run the server
 	log.Fatal(engine.Run(":8080"))
@@ -55,13 +42,18 @@ func long(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"hello": "long"})
 }
 
+func boundary(c *gin.Context) {
+	time.Sleep(2 * time.Second)
+	c.JSON(http.StatusOK, gin.H{"hello": "boundary"})
+}
+
 func long2(c *gin.Context) {
 	if doSomething(c.Request.Context()) {
 		c.JSON(http.StatusOK, gin.H{"hello": "long2"})
 	}
 }
 
-// A cancelCtx can be canceled. 
+// A cancelCtx can be canceled.
 // When canceled, it also cancels any children that implement canceler.
 func doSomething(ctx context.Context) bool {
 	select {
@@ -73,34 +65,3 @@ func doSomething(ctx context.Context) bool {
 		return true
 	}
 }
-```
-
-### Output 
-```
-╰─$ curl -i http://localhost:8080/long
-HTTP/1.1 503 Service Unavailable
-Date: Thu, 11 Jun 2020 06:33:48 GMT
-Content-Length: 45
-Content-Type: text/plain; charset=utf-8
-
-{"code":"E509","msg":"http: Handler timeout"}%
-```
-```
-╰─$ curl -i http://localhost:8080/long2
-HTTP/1.1 503 Service Unavailable
-Date: Fri, 12 Jun 2020 12:31:14 GMT
-Content-Length: 45
-Content-Type: text/plain; charset=utf-8
-
-{"code":"E509","msg":"http: Handler timeout"}
-```
-
-```
-╰─$ curl -i http://localhost:8080/short
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
-Date: Fri, 12 Jun 2020 12:32:13 GMT
-Content-Length: 17
-
-{"hello":"short"}
-```

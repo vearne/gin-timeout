@@ -2,26 +2,25 @@ package timeout
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
 	"time"
 )
 
-const (
-	HandlerFuncTimeout = "E509"
-	ErrUnknowError     = "E003"
-)
-
-func Timeout(t time.Duration) gin.HandlerFunc {
+func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// sync.Pool
 		buffer := buffpool.GetBuff()
 
-		tw := &TimeoutWriter{body: buffer, ResponseWriter: c.Writer, h: make(http.Header)}
+		tw := &TimeoutWriter{body: buffer, ResponseWriter: c.Writer,
+			h: make(http.Header), defaultMsg: defaultMsg}
 		c.Writer = tw
+
+		// Restore Context's writer
+		defer func() {
+			c.Writer = tw.ResponseWriter
+		}()
 
 		// wrap the request context with a timeout
 		ctx, cancel := context.WithTimeout(c.Request.Context(), t)
@@ -46,22 +45,17 @@ func Timeout(t time.Duration) gin.HandlerFunc {
 
 		select {
 		case p := <-panicChan:
-			c.Abort()
-			tw.ResponseWriter.WriteHeader(http.StatusInternalServerError)
-			bt, _ := json.Marshal(errResponse{Code: ErrUnknowError,
-				Msg: fmt.Sprintf("unknow internal error, %v", p)})
-			tw.ResponseWriter.Write(bt)
+			panic(p)
 
 		case <-ctx.Done():
 			tw.mu.Lock()
 			defer tw.mu.Unlock()
 
-			tw.ResponseWriter.WriteHeader(http.StatusServiceUnavailable)
-			bt, _ := json.Marshal(errResponse{Code: HandlerFuncTimeout,
-				Msg: http.ErrHandlerTimeout.Error()})
-			tw.ResponseWriter.Write(bt)
-			c.Abort()
 			tw.timedOut = true
+			tw.ResponseWriter.WriteHeader(http.StatusServiceUnavailable)
+			tw.ResponseWriter.Write([]byte(tw.errorBody()))
+			c.Abort()
+
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.
 		case <-finish:
@@ -71,14 +65,14 @@ func Timeout(t time.Duration) gin.HandlerFunc {
 			for k, vv := range tw.Header() {
 				dst[k] = vv
 			}
+
+			if !tw.wroteHeader {
+				tw.code = http.StatusOK
+			}
 			tw.ResponseWriter.WriteHeader(tw.code)
 			tw.ResponseWriter.Write(buffer.Bytes())
 			buffpool.PutBuff(buffer)
 		}
-	}
-}
 
-type errResponse struct {
-	Code string `json:"code"`
-	Msg  string `json:"msg"`
+	}
 }
