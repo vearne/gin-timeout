@@ -1,20 +1,20 @@
 # gin-timeout
-Timeout Middleware for Gin framework
+针对gin的超时中间件
 
 
-* [中文 README](https://github.com/vearne/gin-timeout/blob/master/README_zh.md)
+* [English README](https://github.com/vearne/gin-timeout/blob/master/README.md)
 
-### Thanks
-Inspired by golang source code [http.TimeoutHandler](https://github.com/golang/go/blob/5f3dabbb79fb3dc8eea9a5050557e9241793dce3/src/net/http/server.go#L3255)
+### 感谢
+本库的实现受到了标准库
+[http.TimeoutHandler](https://github.com/golang/go/blob/5f3dabbb79fb3dc8eea9a5050557e9241793dce3/src/net/http/server.go#L3255) 实现的启发
 
-### Usage
-Download and install using go module:
+### 安装&使用
 ```
 export GO111MODULE=on
 go get github.com/vearne/gin-timeout
 ```
 
-### Example
+### 示例
 ```
 package main
 
@@ -70,18 +70,19 @@ func boundary(c *gin.Context) {
 }
 
 func long2(c *gin.Context) {
-    // Please use c.Request.Context(), the handler will be canceled where timeout event happen.
+	// 注意: 这里需要使用 c.Request.Context()
+	// 当超时发生时，handler会被取消掉
 	if doSomething(c.Request.Context()) {
 		c.JSON(http.StatusOK, gin.H{"hello": "long2"})
 	}
 }
 
 func long3(c *gin.Context) {
-	// request a slow service
-	// see  https://github.com/vearne/gin-timeout/blob/master/example/slow_service.go
+	// 我已经提供了一个慢服务的实例
+	// 参见  https://github.com/vearne/gin-timeout/blob/master/example/slow_service.go
 	url := "http://localhost:8882/hello"
-	// Notice:
-	// Please use c.Request.Context(), the handler will be canceled where timeout event happen.
+	// 注意: 这里需要使用 c.Request.Context()
+	// 当超时发生时，handler会被取消掉
 	req, _ := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
 	client := http.Client{Timeout: 100* time.Second}
 	resp, err :=client.Do(req)
