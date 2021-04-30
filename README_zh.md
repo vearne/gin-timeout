@@ -1,4 +1,6 @@
 # gin-timeout
+![build_ci](https://travis-ci.com/vearne/gin-timeout.svg?branch=master)
+
 针对gin的超时中间件
 
 
