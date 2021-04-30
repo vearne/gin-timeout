@@ -61,17 +61,19 @@ func long3(c *gin.Context) {
 	// request a slow service
 	// see  https://github.com/vearne/gin-timeout/blob/master/example/slow_service.go
 	url := "http://localhost:8882/hello"
-	req, _ := http.NewRequestWithContext(c, http.MethodGet, url, nil)
+	// Notice:
+	// Please use c.Request.Context(), the handler will be canceled where timeout event happen.
+	req, _ := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
 	client := http.Client{Timeout: 100* time.Second}
 	resp, err :=client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("error1:", err)
 		return
 	}
 	defer resp.Body.Close()
 	s, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("error2:", err)
 		return
 	}
 	fmt.Println(s)
