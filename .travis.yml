@@ -10,7 +10,8 @@ before_script:
 
 
 script:
-  - rm -rf example && golangci-lint run       # run a bunch of code checkers/linters in parallel
+  # run a bunch of code checkers/linters in parallel
+  - rm -rf example && golangci-lint run --modules-download-mode=vendor
 
 
 
