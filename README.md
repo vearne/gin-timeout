@@ -86,6 +86,7 @@ func long3(c *gin.Context) {
 	client := http.Client{Timeout: 100* time.Second}
 	resp, err :=client.Do(req)
 	if err != nil {
+	    // Where timeout event happen, a error will be received.
 		fmt.Println("error1:", err)
 		return
 	}
