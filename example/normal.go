@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vearne/gin-timeout"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -25,6 +26,9 @@ func main() {
 
 	// create a handler that will last 5 seconds but can be canceled.
 	engine.GET("/long2", long2)
+
+	// create a handler that will last 20 seconds but can be canceled.
+	engine.GET("/long3", long3)
 
 	engine.GET("/boundary", boundary)
 
@@ -51,6 +55,26 @@ func long2(c *gin.Context) {
 	if doSomething(c.Request.Context()) {
 		c.JSON(http.StatusOK, gin.H{"hello": "long2"})
 	}
+}
+
+func long3(c *gin.Context) {
+	// request a slow service
+	// see  https://github.com/vearne/gin-timeout/blob/master/example/slow_service.go
+	url := "http://localhost:8882/hello"
+	req, _ := http.NewRequestWithContext(c, http.MethodGet, url, nil)
+	client := http.Client{Timeout: 100* time.Second}
+	resp, err :=client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	s, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(s)
 }
 
 // A cancelCtx can be canceled.
