@@ -43,6 +43,7 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 			finish <- struct{}{}
 		}()
 
+		var err error
 		select {
 		case p := <-panicChan:
 			panic(p)
@@ -53,7 +54,10 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 
 			tw.timedOut = true
 			tw.ResponseWriter.WriteHeader(http.StatusServiceUnavailable)
-			tw.ResponseWriter.Write([]byte(tw.errorBody()))
+			_, err = tw.ResponseWriter.Write([]byte(tw.errorBody()))
+			if err != nil {
+				panic(err)
+			}
 			c.Abort()
 
 			// If timeout happen, the buffer cannot be cleared actively,
@@ -70,7 +74,10 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 				tw.code = http.StatusOK
 			}
 			tw.ResponseWriter.WriteHeader(tw.code)
-			tw.ResponseWriter.Write(buffer.Bytes())
+			_, err = tw.ResponseWriter.Write(buffer.Bytes())
+			if err != nil {
+				panic(err)
+			}
 			buffpool.PutBuff(buffer)
 		}
 

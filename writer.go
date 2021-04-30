@@ -10,17 +10,19 @@ import (
 
 type TimeoutWriter struct {
 	gin.ResponseWriter
-	// body
-	body *bytes.Buffer
+
 	// header
 	h http.Header
 
+	// body
+	body *bytes.Buffer
+
+	defaultMsg string
+
+	code        int
 	mu          sync.Mutex
 	timedOut    bool
 	wroteHeader bool
-	code        int
-
-	defaultMsg string
 }
 
 func (tw *TimeoutWriter) Write(b []byte) (int, error) {
