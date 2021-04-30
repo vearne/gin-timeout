@@ -14,6 +14,10 @@ export GO111MODULE=on
 go get github.com/vearne/gin-timeout
 ```
 
+### Notice:
+If the handler supports to be canceled,     
+you need to pass gin.Context.Request.Context() as parameter.
+
 ### Example
 ```
 package main

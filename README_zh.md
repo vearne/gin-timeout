@@ -14,6 +14,9 @@ export GO111MODULE=on
 go get github.com/vearne/gin-timeout
 ```
 
+### 注意:
+如果handler支持取消操作，那么需要传入context.Context为c.Request.Context()
+
 ### 示例
 ```
 package main
