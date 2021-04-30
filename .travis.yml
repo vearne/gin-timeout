@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - "1.16.x"
+
+install: true
+
+before_script:
+  - go get github.com/golangci/golangci-lint/cmd/golangci-lint
+
+
+script:
+  - rm -rf example && golangci-lint run       # run a bunch of code checkers/linters in parallel
+
+
+
+
+
