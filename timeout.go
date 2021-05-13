@@ -5,25 +5,26 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
-	"time"
 )
 
-func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
+func Timeout(opts ...Option) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// sync.Pool
 		buffer := buffpool.GetBuff()
 
 		tw := &TimeoutWriter{body: buffer, ResponseWriter: c.Writer,
-			h: make(http.Header), defaultMsg: defaultMsg}
+			h: make(http.Header)}
+
+		// Loop through each option
+		for _, opt := range opts {
+			// Call the option giving the instantiated
+			opt(tw)
+		}
+
 		c.Writer = tw
 
-		// Restore Context's writer
-		defer func() {
-			c.Writer = tw.ResponseWriter
-		}()
-
 		// wrap the request context with a timeout
-		ctx, cancel := context.WithTimeout(c.Request.Context(), t)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), tw.Timeout)
 		defer cancel()
 
 		c.Request = c.Request.WithContext(ctx)
@@ -53,12 +54,15 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 			defer tw.mu.Unlock()
 
 			tw.timedOut = true
-			tw.ResponseWriter.WriteHeader(http.StatusServiceUnavailable)
+			tw.ResponseWriter.WriteHeader(tw.errorCode())
 			_, err = tw.ResponseWriter.Write([]byte(tw.errorBody()))
 			if err != nil {
 				panic(err)
 			}
 			c.Abort()
+
+			// execute callback func
+			tw.CallBack(c.Request.Clone(context.Background()))
 
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.
@@ -73,6 +77,7 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 			if !tw.wroteHeader {
 				tw.code = http.StatusOK
 			}
+
 			tw.ResponseWriter.WriteHeader(tw.code)
 			_, err = tw.ResponseWriter.Write(buffer.Bytes())
 			if err != nil {

@@ -21,6 +21,7 @@ If the handler supports to be canceled,
 you need to pass gin.Context.Request.Context() as parameter.
 
 ### Example
+[more example](https://github.com/vearne/gin-timeout/tree/master/example)
 ```
 package main
 
@@ -39,8 +40,15 @@ func main() {
 	// create new gin without any middleware
 	engine := gin.Default()
 
+	defaultMsg := `{"code": -1, "msg":"http: Handler timeout"}`
 	// add timeout middleware with 2 second duration
-	engine.Use(timeout.Timeout(time.Second*2, `{"code": -1, "msg":"http: Handler timeout"}`))
+	engine.Use(timeout.Timeout(
+		timeout.WithTimeout(2*time.Second),
+		timeout.WithErrorHttpCode(http.StatusRequestTimeout), // optional
+		timeout.WithDefaultMsg(defaultMsg),                   // optional
+		timeout.WithCallBack(func(r *http.Request) {
+			fmt.Println("timeout happen, url:", r.URL.String())
+		}))) // optional
 
 	// create a handler that will last 1 seconds
 	engine.GET("/short", short)
@@ -76,7 +84,6 @@ func boundary(c *gin.Context) {
 }
 
 func long2(c *gin.Context) {
-    // Please use c.Request.Context(), the handler will be canceled where timeout event happen.
 	if doSomething(c.Request.Context()) {
 		c.JSON(http.StatusOK, gin.H{"hello": "long2"})
 	}
@@ -89,10 +96,10 @@ func long3(c *gin.Context) {
 	// Notice:
 	// Please use c.Request.Context(), the handler will be canceled where timeout event happen.
 	req, _ := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
-	client := http.Client{Timeout: 100* time.Second}
-	resp, err :=client.Do(req)
+	client := http.Client{Timeout: 100 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
-	    // Where timeout event happen, a error will be received.
+		// Where timeout event happen, a error will be received.
 		fmt.Println("error1:", err)
 		return
 	}

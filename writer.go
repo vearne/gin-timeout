@@ -9,6 +9,7 @@ import (
 )
 
 type TimeoutWriter struct {
+	TimeoutOptions // TimeoutOptions in options.go
 	gin.ResponseWriter
 
 	// header
@@ -16,8 +17,6 @@ type TimeoutWriter struct {
 
 	// body
 	body *bytes.Buffer
-
-	defaultMsg string
 
 	code        int
 	mu          sync.Mutex
@@ -56,9 +55,16 @@ func (tw *TimeoutWriter) Header() http.Header {
 	return tw.h
 }
 
+func (tw *TimeoutWriter) errorCode() int{
+	if tw.ErrorHttpCode > 0{
+		return tw.ErrorHttpCode
+	}
+	return http.StatusServiceUnavailable
+}
+
 func (tw *TimeoutWriter) errorBody() string {
-	if tw.defaultMsg != "" {
-		return tw.defaultMsg
+	if tw.DefaultMsg != "" {
+		return tw.DefaultMsg
 	}
 	return "<html><head><title>Timeout</title></head><body><h1>Timeout</h1></body></html>"
 }

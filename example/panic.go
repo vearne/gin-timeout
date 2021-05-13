@@ -29,11 +29,14 @@ func MyRecovery() gin.HandlerFunc {
 }
 
 func main() {
+
 	router := gin.Default()
 	// In order to maintain flexibility,
 	// you should define your own recovery middleware
 	router.Use(MyRecovery())
-	router.Use(timeout.Timeout(3*time.Second, `{"code": -1, "msg":"http: Handler timeout"}`))
+	defaultMsg := `{"code": -1, "msg":"http: Handler timeout"}`
+	router.Use(timeout.Timeout(timeout.WithTimeout(3*time.Second),
+		timeout.WithDefaultMsg(defaultMsg)))
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, time.Now().String())
 	})
