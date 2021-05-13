@@ -8,22 +8,38 @@ import (
 	"time"
 )
 
-func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
+var (
+	defaultOptions TimeoutOptions
+)
+
+func init() {
+	defaultOptions = TimeoutOptions{
+		CallBack:      nil,
+		DefaultMsg:    `{"code": -1, "msg":"http: Handler timeout"}`,
+		Timeout:       3 * time.Second,
+		ErrorHttpCode: http.StatusServiceUnavailable,
+	}
+}
+
+func Timeout(opts ...Option) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// sync.Pool
 		buffer := buffpool.GetBuff()
 
 		tw := &TimeoutWriter{body: buffer, ResponseWriter: c.Writer,
-			h: make(http.Header), defaultMsg: defaultMsg}
+			h: make(http.Header)}
+		tw.TimeoutOptions = defaultOptions
+
+		// Loop through each option
+		for _, opt := range opts {
+			// Call the option giving the instantiated
+			opt(tw)
+		}
+
 		c.Writer = tw
 
-		// Restore Context's writer
-		defer func() {
-			c.Writer = tw.ResponseWriter
-		}()
-
 		// wrap the request context with a timeout
-		ctx, cancel := context.WithTimeout(c.Request.Context(), t)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), tw.Timeout)
 		defer cancel()
 
 		c.Request = c.Request.WithContext(ctx)
@@ -53,13 +69,17 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 			defer tw.mu.Unlock()
 
 			tw.timedOut = true
-			tw.ResponseWriter.WriteHeader(http.StatusServiceUnavailable)
-			_, err = tw.ResponseWriter.Write([]byte(tw.errorBody()))
+			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
+			_, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
 			if err != nil {
 				panic(err)
 			}
 			c.Abort()
 
+			// execute callback func
+			if tw.CallBack != nil {
+				tw.CallBack(c.Request.Clone(context.Background()))
+			}
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.
 		case <-finish:
@@ -73,6 +93,7 @@ func Timeout(t time.Duration, defaultMsg string) gin.HandlerFunc {
 			if !tw.wroteHeader {
 				tw.code = http.StatusOK
 			}
+
 			tw.ResponseWriter.WriteHeader(tw.code)
 			_, err = tw.ResponseWriter.Write(buffer.Bytes())
 			if err != nil {

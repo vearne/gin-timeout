@@ -20,8 +20,8 @@ go get github.com/vearne/gin-timeout
 如果handler支持取消操作，那么需要传入context.Context为c.Request.Context()
 
 ### 示例
-```
-package main
+[更多示例](https://github.com/vearne/gin-timeout/tree/master/example)
+```package main
 
 import (
 	"context"
@@ -38,8 +38,15 @@ func main() {
 	// create new gin without any middleware
 	engine := gin.Default()
 
+	defaultMsg := `{"code": -1, "msg":"http: Handler timeout"}`
 	// add timeout middleware with 2 second duration
-	engine.Use(timeout.Timeout(time.Second*2, `{"code": -1, "msg":"http: Handler timeout"}`))
+	engine.Use(timeout.Timeout(
+		timeout.WithTimeout(2*time.Second),
+		timeout.WithErrorHttpCode(http.StatusRequestTimeout), // 可选参数
+		timeout.WithDefaultMsg(defaultMsg),                   // 可选参数
+		timeout.WithCallBack(func(r *http.Request) {
+			fmt.Println("timeout happen, url:", r.URL.String())
+		}))) // 可选参数
 
 	// create a handler that will last 1 seconds
 	engine.GET("/short", short)
@@ -75,24 +82,22 @@ func boundary(c *gin.Context) {
 }
 
 func long2(c *gin.Context) {
-	// 注意: 这里需要使用 c.Request.Context()
-	// 当超时发生时，handler会被取消掉
 	if doSomething(c.Request.Context()) {
 		c.JSON(http.StatusOK, gin.H{"hello": "long2"})
 	}
 }
 
 func long3(c *gin.Context) {
-	// 我已经提供了一个慢服务的实例
-	// 参见  https://github.com/vearne/gin-timeout/blob/master/example/slow_service.go
+	// request a slow service
+	// see  https://github.com/vearne/gin-timeout/blob/master/example/slow_service.go
 	url := "http://localhost:8882/hello"
-	// 注意: 这里需要使用 c.Request.Context()
-	// 当超时发生时，handler会被取消掉
+	// 注意:
+	// 请使用 c.Request.Context(), 当超时发生时，handler将会被取消.
 	req, _ := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, url, nil)
-	client := http.Client{Timeout: 100* time.Second}
-	resp, err :=client.Do(req)
+	client := http.Client{Timeout: 100 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
-	    // 当超时发生时，会收到一个错误
+		// Where timeout event happen, a error will be received.
 		fmt.Println("error1:", err)
 		return
 	}

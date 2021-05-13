@@ -10,14 +10,11 @@ import (
 
 type TimeoutWriter struct {
 	gin.ResponseWriter
-
 	// header
 	h http.Header
-
 	// body
-	body *bytes.Buffer
-
-	defaultMsg string
+	body           *bytes.Buffer
+	TimeoutOptions // TimeoutOptions in options.go
 
 	code        int
 	mu          sync.Mutex
@@ -54,13 +51,6 @@ func (tw *TimeoutWriter) WriteHeaderNow() {}
 
 func (tw *TimeoutWriter) Header() http.Header {
 	return tw.h
-}
-
-func (tw *TimeoutWriter) errorBody() string {
-	if tw.defaultMsg != "" {
-		return tw.defaultMsg
-	}
-	return "<html><head><title>Timeout</title></head><body><h1>Timeout</h1></body></html>"
 }
 
 func checkWriteHeaderCode(code int) {
