@@ -5,7 +5,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
+	"time"
 )
+
+var (
+	defaultOptions TimeoutOptions
+)
+
+func init() {
+	defaultOptions = TimeoutOptions{
+		CallBack:      nil,
+		DefaultMsg:    `{"code": -1, "msg":"http: Handler timeout"}`,
+		Timeout:       3 * time.Second,
+		ErrorHttpCode: http.StatusServiceUnavailable,
+	}
+}
 
 func Timeout(opts ...Option) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -14,6 +28,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 
 		tw := &TimeoutWriter{body: buffer, ResponseWriter: c.Writer,
 			h: make(http.Header)}
+		tw.TimeoutOptions = defaultOptions
 
 		// Loop through each option
 		for _, opt := range opts {
@@ -54,16 +69,17 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			defer tw.mu.Unlock()
 
 			tw.timedOut = true
-			tw.ResponseWriter.WriteHeader(tw.errorCode())
-			_, err = tw.ResponseWriter.Write([]byte(tw.errorBody()))
+			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
+			_, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
 			if err != nil {
 				panic(err)
 			}
 			c.Abort()
 
 			// execute callback func
-			tw.CallBack(c.Request.Clone(context.Background()))
-
+			if tw.CallBack != nil {
+				tw.CallBack(c.Request.Clone(context.Background()))
+			}
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.
 		case <-finish:

@@ -22,10 +22,12 @@ func main() {
 		timeout.WithTimeout(2*time.Second),
 		timeout.WithErrorHttpCode(http.StatusRequestTimeout), // optional
 		timeout.WithDefaultMsg(defaultMsg),                   // optional
-		timeout.WithCallBack(func(r *http.Request) {
-			fmt.Println("timeout happen, url:", r.URL.String())
-		}))) // optional
-
+		/*
+			timeout.WithCallBack(func(r *http.Request) {
+				fmt.Println("timeout happen, url:", r.URL.String())
+			}) // optional
+		*/
+	))
 	// create a handler that will last 1 seconds
 	engine.GET("/short", short)
 
