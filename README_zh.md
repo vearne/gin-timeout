@@ -1,5 +1,5 @@
 # gin-timeout
-![build_ci](https://travis-ci.com/vearne/gin-timeout.svg?branch=master)
+[![golang-ci](https://github.com/vearne/gin-timeout/actions/workflows/golang-ci.yml/badge.svg)](https://github.com/vearne/gin-timeout/actions/workflows/golang-ci.yml)
 
 针对gin的超时中间件
 
