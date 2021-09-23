@@ -6,6 +6,9 @@ import (
 )
 
 type CallBackFunc func(*http.Request)
+
+type SkipFunc func(c *gin.Context) bool
+
 type Option func(*TimeoutWriter)
 
 type TimeoutOptions struct {
@@ -13,6 +16,7 @@ type TimeoutOptions struct {
 	DefaultMsg    string
 	Timeout       time.Duration
 	ErrorHttpCode int
+	SkipFunc      SkipFunc
 }
 
 func WithTimeout(d time.Duration) Option {
@@ -39,5 +43,11 @@ func WithDefaultMsg(s string) Option {
 func WithCallBack(f CallBackFunc) Option {
 	return func(t *TimeoutWriter) {
 		t.CallBack = f
+	}
+}
+
+func WithSkip(f SkipFunc) Option {
+	return func(t *TimeoutWriter) {
+		t.SkipFunc = f
 	}
 }

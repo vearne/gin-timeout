@@ -36,6 +36,13 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			opt(tw)
 		}
 
+		if tw.SkipFunc != nil {
+			if tw.SkipFunc(c) {
+				c.Next()
+				return
+			}
+		}
+
 		c.Writer = tw
 
 		// wrap the request context with a timeout
