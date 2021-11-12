@@ -11,6 +11,15 @@ import (
 	"time"
 )
 
+func AccessLog() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		log.Println("[start]AccessLog")
+		ctx.Next()
+		log.Println("[end]AccessLog")
+	}
+}
+
+
 func main() {
 
 	// create new gin without any middleware
@@ -30,7 +39,7 @@ func main() {
 	engine.GET("/short", short)
 
 	// create a handler that will last 5 seconds
-	engine.GET("/long", long)
+	engine.GET("/long", AccessLog(), long)
 
 	// create a handler that will last 5 seconds but can be canceled.
 	engine.GET("/long2", long2)
@@ -50,7 +59,11 @@ func short(c *gin.Context) {
 }
 
 func long(c *gin.Context) {
+	fmt.Println("handler-long1, do something...")
 	time.Sleep(3 * time.Second)
+	fmt.Println("handler-long2, do something...")
+	time.Sleep(3 * time.Second)
+	fmt.Println("handler-long3, do something...")
 	c.JSON(http.StatusOK, gin.H{"hello": "long"})
 }
 

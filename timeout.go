@@ -23,10 +23,16 @@ func init() {
 
 func Timeout(opts ...Option) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// **Notice**
+		// because gin use sync.pool to reuse context object.
+		// So this has to be used when the context has to be passed to a goroutine.
+		cp := *c
+		c.Abort()
+		c.Keys = nil
+
 		// sync.Pool
 		buffer := buffpool.GetBuff()
-
-		tw := &TimeoutWriter{body: buffer, ResponseWriter: c.Writer,
+		tw := &TimeoutWriter{body: buffer, ResponseWriter: cp.Writer,
 			h: make(http.Header)}
 		tw.TimeoutOptions = defaultOptions
 
@@ -36,13 +42,13 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			opt(tw)
 		}
 
-		c.Writer = tw
+		cp.Writer = tw
 
 		// wrap the request context with a timeout
-		ctx, cancel := context.WithTimeout(c.Request.Context(), tw.Timeout)
+		ctx, cancel := context.WithTimeout(cp.Request.Context(), tw.Timeout)
 		defer cancel()
 
-		c.Request = c.Request.WithContext(ctx)
+		cp.Request = cp.Request.WithContext(ctx)
 
 		// Channel capacity must be greater than 0.
 		// Otherwise, if the parent coroutine quit due to timeout,
@@ -55,7 +61,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 					panicChan <- p
 				}
 			}()
-			c.Next()
+			cp.Next()
 			finish <- struct{}{}
 		}()
 
@@ -74,11 +80,12 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			if err != nil {
 				panic(err)
 			}
-			c.Abort()
+
+			cp.Abort()
 
 			// execute callback func
 			if tw.CallBack != nil {
-				tw.CallBack(c.Request.Clone(context.Background()))
+				tw.CallBack(cp.Request.Clone(context.Background()))
 			}
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.
