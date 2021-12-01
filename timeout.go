@@ -26,7 +26,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		// **Notice**
 		// because gin use sync.pool to reuse context object.
 		// So this has to be used when the context has to be passed to a goroutine.
-		cp := *c
+		cp := *c  //nolint: govet
 		c.Abort()
 		c.Keys = nil
 
