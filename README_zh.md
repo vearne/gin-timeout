@@ -124,4 +124,6 @@ func doSomething(ctx context.Context) bool {
 }
 ```
 
+### 感谢
+[![jetbrains](img/jetbrains.svg)](https://www.jetbrains.com/community/opensource/#support)
 
