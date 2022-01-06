@@ -98,7 +98,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			}
 
 			if !tw.wroteHeader {
-				tw.code = http.StatusOK
+				tw.code = c.Writer.Status()
 			}
 
 			tw.ResponseWriter.WriteHeader(tw.code)
