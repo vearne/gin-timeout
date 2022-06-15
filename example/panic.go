@@ -29,7 +29,6 @@ func MyRecovery() gin.HandlerFunc {
 }
 
 func main() {
-
 	router := gin.Default()
 	// In order to maintain flexibility,
 	// you should define your own recovery middleware
