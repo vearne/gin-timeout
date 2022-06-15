@@ -2,9 +2,11 @@ package timeout
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
+	"runtime/debug"
 	"time"
 )
 
@@ -26,7 +28,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		// **Notice**
 		// because gin use sync.pool to reuse context object.
 		// So this has to be used when the context has to be passed to a goroutine.
-		cp := *c  //nolint: govet
+		cp := *c //nolint: govet
 		c.Abort()
 		c.Keys = nil
 
@@ -58,7 +60,8 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		go func() {
 			defer func() {
 				if p := recover(); p != nil {
-					panicChan <- p
+					err := fmt.Errorf("gin-timeout recover:%v, stack: \n :%v", p, string(debug.Stack()))
+					panicChan <- err
 				}
 			}()
 			cp.Next()
