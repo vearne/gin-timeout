@@ -2,7 +2,6 @@ package timeout
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
@@ -33,7 +32,6 @@ func (tw *TimeoutWriter) Write(b []byte) (int, error) {
 }
 
 func (tw *TimeoutWriter) WriteHeader(code int) {
-	checkWriteHeaderCode(code)
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
 	if tw.timedOut {
@@ -51,10 +49,4 @@ func (tw *TimeoutWriter) WriteHeaderNow() {}
 
 func (tw *TimeoutWriter) Header() http.Header {
 	return tw.h
-}
-
-func checkWriteHeaderCode(code int) {
-	if code < 100 || code > 999 {
-		panic(fmt.Sprintf("invalid WriteHeader code %v", code))
-	}
 }
