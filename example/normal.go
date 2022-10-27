@@ -19,7 +19,6 @@ func AccessLog() gin.HandlerFunc {
 	}
 }
 
-
 func main() {
 
 	// create new gin without any middleware
@@ -54,6 +53,10 @@ func main() {
 }
 
 func short(c *gin.Context) {
+	defer func(writer gin.ResponseWriter) {
+		fmt.Printf("c.Writer.Size: %v, %T\n", writer.Size(), writer)
+	}(c.Writer)
+
 	time.Sleep(1 * time.Second)
 	c.JSON(http.StatusOK, gin.H{"hello": "short"})
 }
