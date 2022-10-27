@@ -19,6 +19,7 @@ type TimeoutWriter struct {
 	mu          sync.Mutex
 	timedOut    bool
 	wroteHeader bool
+	size        int
 }
 
 func (tw *TimeoutWriter) Write(b []byte) (int, error) {
@@ -27,7 +28,7 @@ func (tw *TimeoutWriter) Write(b []byte) (int, error) {
 	if tw.timedOut {
 		return 0, nil
 	}
-
+	tw.size += len(b)
 	return tw.body.Write(b)
 }
 
@@ -49,4 +50,8 @@ func (tw *TimeoutWriter) WriteHeaderNow() {}
 
 func (tw *TimeoutWriter) Header() http.Header {
 	return tw.h
+}
+
+func (tw *TimeoutWriter) Size() int {
+	return tw.size
 }
