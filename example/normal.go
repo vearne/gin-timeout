@@ -11,6 +11,12 @@ import (
 	"time"
 )
 
+/*
+    curl -i http://localhost:8080/short
+	curl -i http://localhost:8080/long
+	curl -i http://localhost:8080/long2
+	curl -i http://localhost:8080/long3
+*/
 func AccessLog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		log.Println("[start]AccessLog")
@@ -62,6 +68,10 @@ func short(c *gin.Context) {
 }
 
 func long(c *gin.Context) {
+	defer func(writer gin.ResponseWriter) {
+		fmt.Printf("c.Writer.Size: %v, %T\n", writer.Size(), writer)
+	}(c.Writer)
+
 	fmt.Println("handler-long1, do something...")
 	time.Sleep(3 * time.Second)
 	fmt.Println("handler-long2, do something...")

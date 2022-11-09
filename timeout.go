@@ -69,6 +69,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		}()
 
 		var err error
+		var n int
 		select {
 		case p := <-panicChan:
 			panic(p)
@@ -79,11 +80,11 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 
 			tw.timedOut = true
 			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
-			_, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
+			n, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
 			if err != nil {
 				panic(err)
 			}
-
+			tw.size += n
 			cp.Abort()
 
 			// execute callback func
