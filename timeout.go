@@ -3,11 +3,12 @@ package timeout
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/vearne/gin-timeout/buffpool"
 )
 
 var (
@@ -78,21 +79,27 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			tw.mu.Lock()
 			defer tw.mu.Unlock()
 
-			tw.timedOut = true
-			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
-			n, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
-			if err != nil {
-				panic(err)
-			}
-			tw.size += n
-			cp.Abort()
+			switch ctx.Err() {
+			case context.DeadlineExceeded:
+				tw.timedOut = true
+				tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
+				n, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
+				if err != nil {
+					panic(err)
+				}
+				tw.size += n
+				cp.Abort()
 
-			// execute callback func
-			if tw.CallBack != nil {
-				tw.CallBack(cp.Request.Clone(context.Background()))
+				// execute callback func
+				if tw.CallBack != nil {
+					tw.CallBack(cp.Request.Clone(context.Background()))
+				}
+				// If timeout happen, the buffer cannot be cleared actively,
+				// but wait for the GC to recycle.
+			case context.Canceled:
+				// do nothing
 			}
-			// If timeout happen, the buffer cannot be cleared actively,
-			// but wait for the GC to recycle.
+
 		case <-finish:
 			tw.mu.Lock()
 			defer tw.mu.Unlock()
