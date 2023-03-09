@@ -106,9 +106,10 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			}
 
 			tw.ResponseWriter.WriteHeader(tw.code)
-			_, err = tw.ResponseWriter.Write(buffer.Bytes())
-			if err != nil {
-				panic(err)
+			if b := buffer.Bytes(); len(b) > 0 {
+				if _, err = tw.ResponseWriter.Write(b); err != nil {
+					panic(err)
+				}
 			}
 			buffpool.PutBuff(buffer)
 		}
