@@ -111,3 +111,47 @@ func TestTimeout(t *testing.T) {
 	code, _ = Get("/b", router, nil, nil)
 	assert.Equal(t, http.StatusMovedPermanently, code)
 }
+
+func TestPanic(t *testing.T) {
+	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		defer func() {
+			if p := recover(); p != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError,
+					map[string]any{"code": -1, "msg": fmt.Sprintf("unknow error:%v", p)})
+				return
+			}
+		}()
+		c.Next()
+	})
+	router.Use(Timeout(WithTimeout(3 * time.Second)))
+	router.GET("/panic", func(c *gin.Context) {
+		time.Sleep(1 * time.Second)
+		x := 0
+		fmt.Println(100 / x)
+	})
+
+	code, b := Get("/panic", router, nil, nil)
+	assert.Equal(t, http.StatusInternalServerError, code)
+	assert.Contains(t, string(b), "integer divide by zero")
+}
+
+func TestWriteSize(t *testing.T) {
+	router := gin.Default()
+	router.Use(Timeout(WithTimeout(3 * time.Second)))
+	router.GET("/short", func(c *gin.Context) {
+		defer func(writer gin.ResponseWriter) {
+			assert.Equal(t, 17, c.Writer.Size())
+		}(c.Writer)
+
+		c.JSON(http.StatusOK, gin.H{"hello": "short"})
+	})
+
+	req := httptest.NewRequest("GET", "/short", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	result := w.Result()
+
+	assert.Equal(t, http.StatusOK, result.StatusCode)
+
+}
