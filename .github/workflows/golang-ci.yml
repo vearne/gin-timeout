@@ -23,20 +23,20 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.18
+          go-version: 1.19
       - name: Test
         run: go mod vendor && go test -v ./
 
   lint:
     runs-on: ubuntu-latest
     container:
-      image: golangci/golangci-lint:v1.40
+      image: golangci/golangci-lint:v1.48.0
     steps:
       - name: checkout
         uses: actions/checkout@v2
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.18
+          go-version: 1.19
       - name: golangci-lint
         run: rm -rf example && golangci-lint run --modules-download-mode=mod
