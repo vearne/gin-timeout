@@ -22,7 +22,7 @@ you need to pass gin.Context.Request.Context() as parameter.
 
 ### Example
 [more example](https://github.com/vearne/gin-timeout/tree/master/example)
-```
+```go
 package main
 
 import (
