@@ -21,7 +21,8 @@ go get github.com/vearne/gin-timeout
 
 ### 示例
 [更多示例](https://github.com/vearne/gin-timeout/tree/master/example)
-```package main
+```go
+package main
 
 import (
 	"context"
