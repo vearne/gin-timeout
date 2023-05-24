@@ -29,9 +29,9 @@ func WithErrorHttpCode(code int) Option {
 }
 
 // Optional parameters
-func WithDefaultMsg(s string) Option {
+func WithDefaultMsg(resp interface{}) Option {
 	return func(t *TimeoutWriter) {
-		t.DefaultMsg = s
+		t.DefaultMsg = resp
 	}
 }
 
