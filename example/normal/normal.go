@@ -3,20 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/vearne/gin-timeout"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	timeout "github.com/vearne/gin-timeout"
 )
 
-/*
-    curl -i http://localhost:8080/short
-	curl -i http://localhost:8080/long
-	curl -i http://localhost:8080/long2
-	curl -i http://localhost:8080/long3
-*/
+// test usage:
+//  curl -i http://localhost:8080/short
+//  curl -i http://localhost:8080/long
+//  curl -i http://localhost:8080/long2
+//  curl -i http://localhost:8080/long3
+
 func AccessLog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		log.Println("[start]AccessLog")

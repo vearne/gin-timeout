@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	timeout "github.com/vearne/gin-timeout"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	timeout "github.com/vearne/gin-timeout"
 )
 
 type errResponse struct {

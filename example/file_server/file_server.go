@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	timeout "github.com/vearne/gin-timeout"
 	"log"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	timeout "github.com/vearne/gin-timeout"
 )
 
 func main() {
