@@ -2,8 +2,6 @@ package timeout
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
 	"net/http"
@@ -11,7 +9,33 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestEncodeBytes(t *testing.T) {
+	num := 1
+	assert.Equal(t, []byte("1"), encodeBytes(num))
+
+	var null map[string]string // nil
+	assert.Equal(t, []byte("null"), encodeBytes(null))
+
+	str := "abc"
+	assert.Equal(t, []byte(str), encodeBytes(str))
+
+	bs := []byte("abc")
+	assert.Equal(t, bs, encodeBytes(bs))
+
+	type Entry struct {
+		Name string `json:"name"`
+	}
+
+	out := `{"name":"gin-timeout"}`
+	entry := Entry{"gin-timeout"}
+	assert.Equal(t, []byte(out), encodeBytes(entry))
+	assert.Equal(t, []byte(out), encodeBytes(&entry))
+}
 
 func testEngine() *gin.Engine {
 	engine := gin.Default()
