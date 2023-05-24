@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	timeout "github.com/vearne/gin-timeout"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	timeout "github.com/vearne/gin-timeout"
 )
 
 // test case1:
