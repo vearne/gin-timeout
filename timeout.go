@@ -2,12 +2,14 @@ package timeout
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/vearne/gin-timeout/buffpool"
 )
 
 var (
@@ -80,7 +82,8 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 
 			tw.timedOut = true
 			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
-			n, err = tw.ResponseWriter.Write([]byte(tw.DefaultMsg))
+
+			n, err = tw.ResponseWriter.Write(encodeBytes(tw.DefaultMsg))
 			if err != nil {
 				panic(err)
 			}
@@ -115,4 +118,17 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		}
 
 	}
+}
+
+func encodeBytes(any interface{}) []byte {
+	var resp []byte
+	switch demsg := any.(type) {
+	case string:
+		resp = []byte(demsg)
+	case []byte:
+		resp = demsg
+	default:
+		resp, _ = json.Marshal(any)
+	}
+	return resp
 }

@@ -10,7 +10,7 @@ type Option func(*TimeoutWriter)
 
 type TimeoutOptions struct {
 	CallBack      CallBackFunc
-	DefaultMsg    string
+	DefaultMsg    interface{}
 	Timeout       time.Duration
 	ErrorHttpCode int
 }
@@ -29,9 +29,9 @@ func WithErrorHttpCode(code int) Option {
 }
 
 // Optional parameters
-func WithDefaultMsg(s string) Option {
+func WithDefaultMsg(resp interface{}) Option {
 	return func(t *TimeoutWriter) {
-		t.DefaultMsg = s
+		t.DefaultMsg = resp
 	}
 }
 
