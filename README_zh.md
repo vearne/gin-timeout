@@ -17,7 +17,41 @@ go get github.com/vearne/gin-timeout
 ```
 
 ### 注意:
-如果handler支持取消操作，那么需要传入context.Context为c.Request.Context()
+- 如果handler支持取消操作，那么需要传入context.Context为c.Request.Context()
+
+- 如果你想在中间件中获得响应的状态码，你应该把中间件放到timeout中间件之前。
+```go
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	timeout "github.com/vearne/gin-timeout"
+)
+
+func main() {
+	req, _ := http.NewRequest("GET", "/test", nil)
+
+	engine := gin.New()
+	engine.Use(func(c *gin.Context) {
+		c.Next()
+		println("middleware code: ", c.Writer.Status())
+	})
+
+	engine.Use(timeout.Timeout(timeout.WithTimeout(10 * time.Second)))
+	
+	engine.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusBadRequest)
+	})
+	rr := httptest.NewRecorder()
+	engine.ServeHTTP(rr, req)
+
+	println("response code: ", rr.Code)
+}
+```
 
 ### 示例
 [更多示例](https://github.com/vearne/gin-timeout/tree/master/example)
