@@ -17,8 +17,41 @@ go get github.com/vearne/gin-timeout
 ```
 
 ### Notice:
-If the handler supports to be canceled,     
-you need to pass gin.Context.Request.Context() as parameter.
+- If the handler supports to be canceled, you need to pass gin.Context.Request.Context() as parameter.
+
+- If you want to get the status code of the response in middleware, you should put the middleware before the timeout middleware.
+```go
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	timeout "github.com/vearne/gin-timeout"
+)
+
+func main() {
+	req, _ := http.NewRequest("GET", "/test", nil)
+
+	engine := gin.New()
+	engine.Use(func(c *gin.Context) {
+		c.Next()
+		println("middleware code: ", c.Writer.Status())
+	})
+
+	engine.Use(timeout.Timeout(timeout.WithTimeout(10 * time.Second)))
+	
+	engine.GET("/test", func(c *gin.Context) {
+		c.Status(http.StatusBadRequest)
+	})
+	rr := httptest.NewRecorder()
+	engine.ServeHTTP(rr, req)
+
+	println("response code: ", rr.Code)
+}
+```
 
 ### Example
 [more example](https://github.com/vearne/gin-timeout/tree/master/example)
