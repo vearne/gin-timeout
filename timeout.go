@@ -32,7 +32,6 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		// So this has to be used when the context has to be passed to a goroutine.
 		cp := *c //nolint: govet
 		c.Abort()
-		c.Keys = nil
 
 		// sync.Pool
 		buffer := buffpool.GetBuff()
@@ -92,7 +91,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 
 			// execute callback func
 			if tw.CallBack != nil {
-				tw.CallBack(cp.Request.Clone(context.Background()))
+				tw.CallBack(cp.Request)
 			}
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.
