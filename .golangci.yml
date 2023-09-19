@@ -16,3 +16,9 @@ linters-settings:
   govet:
     check-shadowing: true
     enable-all: true
+    
+run:
+  skip-dirs:
+    - scripts
+    - test
+    - example
