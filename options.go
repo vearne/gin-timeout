@@ -3,16 +3,20 @@ package timeout
 import (
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CallBackFunc func(*http.Request)
+type GinCtxCallBackFunc func(*gin.Context)
 type Option func(*TimeoutWriter)
 
 type TimeoutOptions struct {
-	CallBack      CallBackFunc
-	DefaultMsg    interface{}
-	Timeout       time.Duration
-	ErrorHttpCode int
+	CallBack       CallBackFunc
+	GinCtxCallBack GinCtxCallBackFunc
+	DefaultMsg     interface{}
+	Timeout        time.Duration
+	ErrorHttpCode  int
 }
 
 func WithTimeout(d time.Duration) Option {
@@ -39,5 +43,12 @@ func WithDefaultMsg(resp interface{}) Option {
 func WithCallBack(f CallBackFunc) Option {
 	return func(t *TimeoutWriter) {
 		t.CallBack = f
+	}
+}
+
+// Optional parameters
+func WithCallBackGinContext(f GinCtxCallBackFunc) Option {
+	return func(t *TimeoutWriter) {
+		t.GinCtxCallBack = f
 	}
 }
