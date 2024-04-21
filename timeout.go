@@ -93,7 +93,8 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			// execute callback func
 			if tw.CallBack != nil {
 				tw.CallBack(cp.Request)
-			} else if tw.GinCtxCallBack != nil {
+			}
+			if tw.GinCtxCallBack != nil {
 				tw.GinCtxCallBack(c)
 			}
 			// If timeout happen, the buffer cannot be cleared actively,

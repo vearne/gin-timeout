@@ -47,7 +47,7 @@ func WithCallBack(f CallBackFunc) Option {
 }
 
 // Optional parameters
-func WithCallBackGinContext(f GinCtxCallBackFunc) Option {
+func WithGinCtxCallBack(f GinCtxCallBackFunc) Option {
 	return func(t *TimeoutWriter) {
 		t.GinCtxCallBack = f
 	}
