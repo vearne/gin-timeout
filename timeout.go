@@ -18,10 +18,11 @@ var (
 
 func init() {
 	defaultOptions = TimeoutOptions{
-		CallBack:      nil,
-		DefaultMsg:    `{"code": -1, "msg":"http: Handler timeout"}`,
-		Timeout:       3 * time.Second,
-		ErrorHttpCode: http.StatusServiceUnavailable,
+		CallBack:       nil,
+		GinCtxCallBack: nil,
+		DefaultMsg:     `{"code": -1, "msg":"http: Handler timeout"}`,
+		Timeout:        3 * time.Second,
+		ErrorHttpCode:  http.StatusServiceUnavailable,
 	}
 }
 
@@ -92,6 +93,9 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			// execute callback func
 			if tw.CallBack != nil {
 				tw.CallBack(cp.Request)
+			}
+			if tw.GinCtxCallBack != nil {
+				tw.GinCtxCallBack(c)
 			}
 			// If timeout happen, the buffer cannot be cleared actively,
 			// but wait for the GC to recycle.

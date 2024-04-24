@@ -81,6 +81,9 @@ func main() {
 		timeout.WithDefaultMsg(defaultMsg),                   // optional
 		timeout.WithCallBack(func(r *http.Request) {
 			fmt.Println("timeout happen, url:", r.URL.String())
+		}),
+		timeout.WithGinCtxCallBack(func(c *gin.Context) {
+			fmt.Println("timeout happen, url:", c.Request.URL.String())
 		}))) // optional
 
 	// create a handler that will last 1 seconds
