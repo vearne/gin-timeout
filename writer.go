@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
+	"sync/atomic"
 )
 
 type TimeoutWriter struct {
@@ -17,15 +18,15 @@ type TimeoutWriter struct {
 
 	code        int
 	mu          sync.Mutex
-	timedOut    bool
-	wroteHeader bool
+	timedOut    atomic.Bool
+	wroteHeader atomic.Bool
 	size        int
 }
 
 func (tw *TimeoutWriter) Write(b []byte) (int, error) {
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
-	if tw.timedOut {
+	if tw.timedOut.Load() {
 		return 0, nil
 	}
 	tw.size += len(b)
@@ -35,14 +36,14 @@ func (tw *TimeoutWriter) Write(b []byte) (int, error) {
 func (tw *TimeoutWriter) WriteHeader(code int) {
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
-	if tw.timedOut {
+	if tw.timedOut.Load() {
 		return
 	}
 	tw.writeHeader(code)
 }
 
 func (tw *TimeoutWriter) writeHeader(code int) {
-	tw.wroteHeader = true
+	tw.wroteHeader.Store(true)
 	tw.code = code
 }
 

@@ -80,7 +80,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			tw.mu.Lock()
 			defer tw.mu.Unlock()
 
-			tw.timedOut = true
+			tw.timedOut.Store(true)
 			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
 
 			n, err = tw.ResponseWriter.Write(encodeBytes(tw.DefaultMsg))
@@ -107,7 +107,7 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 				dst[k] = vv
 			}
 
-			if !tw.wroteHeader {
+			if !tw.wroteHeader.Load() {
 				tw.code = c.Writer.Status()
 			}
 

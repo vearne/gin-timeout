@@ -18,8 +18,8 @@ func main() {
 	log.Fatal(router.Run(":8080"))
 }
 
-// mkdir -p /tmp/foo
-// echo "a" >> /tmp/foo/a
+// mkdir -p /tmp/static
+// echo "a" >> /tmp/static/a
 
 // test case1:
 // curl -I http://localhost:8080/static/a
