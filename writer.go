@@ -56,3 +56,10 @@ func (tw *TimeoutWriter) Header() http.Header {
 func (tw *TimeoutWriter) Size() int {
 	return tw.size
 }
+
+func (tw *TimeoutWriter) Status() int {
+	if tw.code == 0 || !tw.wroteHeader.Load() {
+		return tw.ResponseWriter.Status()
+	}
+	return tw.code
+}
