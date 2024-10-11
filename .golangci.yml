@@ -1,24 +1,21 @@
 linters:
-  disable-all: true
+  disable-all: true  # Turn off other linters
   enable:
-    - deadcode      # Finds unused code
+    - errcheck      # Errcheck is a program for checking for unchecked errors in go programs. These unchecked errors can be critical bugs in some cases
     - gosimple      # Linter for Go source code that specializes in simplifying a code
     - govet         # Vet examines Go source code and reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
     - ineffassign   # Detects when assignments to existing variables are not used
-    - staticcheck   # Staticcheck is a go vet on steroids, applying a ton of static analysis checks
-    - structcheck   # Finds unused struct fields
-    - typecheck     # Like the front-end of a Go compiler, parses and type-checks Go code
-    - unused        # Checks Go code for unused constants, variables, functions and types
-    - varcheck      # Finds unused global variables and constants
-    - exportloopref # checks for pointers to enclosing loop variables
-#    - golint        # Carry out the stylistic conventions put forth in Effective Go and CodeReviewComments
+    - staticcheck   # It's a set of rules from staticcheck. It's not the same thing as the staticcheck binary.
+    - unused        # Checks Go code for unused constants, variables, functions and types.
+    - copyloopvar   # Detects places where loop variables are copied.
+
 linters-settings:
-  govet:
-    check-shadowing: true
+  govet:            # For linter govet, we manually enabled some of its scanning rules
     enable-all: true
-    
-run:
-  skip-dirs:
+    disable:
+      - fieldalignment
+issues:
+  exclude-dirs:
     - scripts
     - test
     - example
