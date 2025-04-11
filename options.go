@@ -14,9 +14,8 @@ type Option func(*TimeoutWriter)
 type TimeoutOptions struct {
 	CallBack       CallBackFunc
 	GinCtxCallBack GinCtxCallBackFunc
-	DefaultMsg     interface{}
 	Timeout        time.Duration
-	ErrorHttpCode  int
+	Response       Response
 }
 
 func WithTimeout(d time.Duration) Option {
@@ -28,14 +27,38 @@ func WithTimeout(d time.Duration) Option {
 // Optional parameters
 func WithErrorHttpCode(code int) Option {
 	return func(t *TimeoutWriter) {
-		t.ErrorHttpCode = code
+		if t.Response == nil {
+			t.Response = defaultResponse
+		}
+		t.Response.SetCode(code)
 	}
 }
 
 // Optional parameters
 func WithDefaultMsg(resp interface{}) Option {
 	return func(t *TimeoutWriter) {
-		t.DefaultMsg = resp
+		if t.Response == nil {
+			t.Response = defaultResponse
+		}
+		t.Response.SetContent(resp)
+	}
+}
+
+// Optional parameters
+func WithContentType(ct string) Option {
+	return func(t *TimeoutWriter) {
+		if t.Response == nil {
+			t.Response = defaultResponse
+		}
+		t.Response.SetContentType(ct)
+	}
+}
+
+func WithResponse(resp Response) Option {
+	return func(t *TimeoutWriter) {
+		if resp != nil {
+			t.Response = resp
+		}
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/vearne/gin-timeout/buffpool"
 )
 
@@ -20,9 +21,8 @@ func init() {
 	defaultOptions = TimeoutOptions{
 		CallBack:       nil,
 		GinCtxCallBack: nil,
-		DefaultMsg:     `{"code": -1, "msg":"http: Handler timeout"}`,
 		Timeout:        3 * time.Second,
-		ErrorHttpCode:  http.StatusServiceUnavailable,
+		Response:       defaultResponse,
 	}
 }
 
@@ -44,6 +44,10 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		for _, opt := range opts {
 			// Call the option giving the instantiated
 			opt(tw)
+		}
+
+		if tw.Response == nil {
+			tw.Response = defaultResponse
 		}
 
 		cp.Writer = tw
@@ -81,9 +85,10 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			defer tw.mu.Unlock()
 
 			tw.timedOut.Store(true)
-			tw.ResponseWriter.WriteHeader(tw.ErrorHttpCode)
+			tw.ResponseWriter.WriteHeader(tw.Response.GetCode(&cp))
 
-			n, err = tw.ResponseWriter.Write(encodeBytes(tw.DefaultMsg))
+			tw.ResponseWriter.Header().Set("Content-Type", tw.Response.GetContentType(&cp))
+			n, err = tw.ResponseWriter.Write(encodeBytes(tw.Response.GetContent(&cp)))
 			if err != nil {
 				panic(err)
 			}
