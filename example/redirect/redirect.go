@@ -51,6 +51,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown:", err)
+		log.Fatalf("Server forced to shutdown: %s", err)
 	}
 }

@@ -70,6 +70,74 @@ func testEngine() *gin.Engine {
 	return engine
 }
 
+var languageMap = map[string]string{
+	"timeoutMsgID": "Handler timeout",
+}
+
+type testResponse struct {
+	BaseResponse
+}
+
+type testContent struct {
+	Code    int    `json:"code"`
+	Message string `json:"msg"`
+}
+
+func (r *testResponse) GetContent(c *gin.Context) any {
+	content, ok := r.Content.(testContent)
+	if !ok {
+		return r.Content
+	}
+
+	if msg, ok := languageMap[content.Message]; ok {
+		content.Message = msg
+	}
+
+	return content
+}
+
+func testEngineWithResponse() *gin.Engine {
+	engine := gin.Default()
+
+	// add timeout middleware with 2 second duration
+	engine.Use(Timeout(
+		WithTimeout(2*time.Second),
+		WithResponse(
+			&testResponse{
+				BaseResponse: BaseResponse{
+					Code: http.StatusRequestTimeout,
+					Content: testContent{
+						Code:    99,
+						Message: "timeoutMsgID",
+					},
+					ContentType: "application/json; charset=utf-8",
+				},
+			},
+		), // optional
+		WithCallBack(func(r *http.Request) {
+			fmt.Println("timeout happen, url:", r.URL.String())
+		}), // optional
+		WithGinCtxCallBack(func(c *gin.Context) {
+			fmt.Println("timeout happen, url:", c.Request.URL.String())
+		}), // optional
+	))
+
+	// create a handler that will last 1 seconds
+	engine.GET("/short", short)
+
+	// create a handler that will last 5 seconds
+	engine.GET("/long", AccessLog(), long)
+
+	engine.GET("/a", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "this is page A")
+	})
+	engine.GET("/b", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/a")
+	})
+
+	return engine
+}
+
 func short(c *gin.Context) {
 	defer func(writer gin.ResponseWriter) {
 		fmt.Printf("c.Writer.Size: %v, %T\n", writer.Size(), writer)
@@ -100,7 +168,7 @@ func long(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"hello": "long"})
 }
 
-func Get(uri string, router *gin.Engine, headers, querys map[string]string) (int, []byte) {
+func Get(uri string, router *gin.Engine, headers, querys map[string]string) (int, string, []byte) {
 	u, _ := url.Parse(uri)
 	q := u.Query()
 	for k, v := range querys {
@@ -121,21 +189,40 @@ func Get(uri string, router *gin.Engine, headers, querys map[string]string) (int
 	defer result.Body.Close()
 
 	body, _ := io.ReadAll(result.Body)
-	return result.StatusCode, body
+	return result.StatusCode, result.Header.Get("Content-Type"), body
 }
 
 func TestTimeout(t *testing.T) {
 	router := testEngine()
 	var code int
+	var h string
 	var b []byte
-	code, _ = Get("/short", router, nil, nil)
+	code, _, _ = Get("/short", router, nil, nil)
 	assert.Equal(t, http.StatusOK, code)
 
-	code, b = Get("/long", router, nil, nil)
+	code, h, b = Get("/long", router, nil, nil)
 	assert.Equal(t, http.StatusRequestTimeout, code)
 	assert.Equal(t, `{"code": -1, "msg":"http: Handler timeout"}`, string(b))
+	assert.Equal(t, "text/plain; charset=utf-8", h)
 
-	code, _ = Get("/b", router, nil, nil)
+	code, _, _ = Get("/b", router, nil, nil)
+	assert.Equal(t, http.StatusMovedPermanently, code)
+}
+
+func TestTimeoutWithResponse(t *testing.T) {
+	router := testEngineWithResponse()
+	var code int
+	var h string
+	var b []byte
+	code, _, _ = Get("/short", router, nil, nil)
+	assert.Equal(t, http.StatusOK, code)
+
+	code, h, b = Get("/long", router, nil, nil)
+	assert.Equal(t, http.StatusRequestTimeout, code)
+	assert.Equal(t, `{"code":99,"msg":"Handler timeout"}`, string(b))
+	assert.Equal(t, "application/json; charset=utf-8", h)
+
+	code, _, _ = Get("/b", router, nil, nil)
 	assert.Equal(t, http.StatusMovedPermanently, code)
 }
 
@@ -158,7 +245,7 @@ func TestPanic(t *testing.T) {
 		fmt.Println(100 / x)
 	})
 
-	code, b := Get("/panic", router, nil, nil)
+	code, _, b := Get("/panic", router, nil, nil)
 	assert.Equal(t, http.StatusInternalServerError, code)
 	assert.Contains(t, string(b), "integer divide by zero")
 }
