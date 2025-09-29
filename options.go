@@ -1,10 +1,9 @@
 package timeout
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type CallBackFunc func(*http.Request)
@@ -24,7 +23,7 @@ func WithTimeout(d time.Duration) Option {
 	}
 }
 
-// Optional parameters
+// WithErrorHttpCode Optional parameters
 func WithErrorHttpCode(code int) Option {
 	return func(t *TimeoutWriter) {
 		if t.Response == nil {
@@ -34,7 +33,7 @@ func WithErrorHttpCode(code int) Option {
 	}
 }
 
-// Optional parameters
+// WithDefaultMsg Optional parameters
 func WithDefaultMsg(resp interface{}) Option {
 	return func(t *TimeoutWriter) {
 		if t.Response == nil {
@@ -44,7 +43,7 @@ func WithDefaultMsg(resp interface{}) Option {
 	}
 }
 
-// Optional parameters
+// WithContentType Optional parameters
 func WithContentType(ct string) Option {
 	return func(t *TimeoutWriter) {
 		if t.Response == nil {
@@ -62,14 +61,14 @@ func WithResponse(resp Response) Option {
 	}
 }
 
-// Optional parameters
+// WithCallBack Optional parameters
 func WithCallBack(f CallBackFunc) Option {
 	return func(t *TimeoutWriter) {
 		t.CallBack = f
 	}
 }
 
-// Optional parameters
+// WithGinCtxCallBack Optional parameters
 func WithGinCtxCallBack(f GinCtxCallBackFunc) Option {
 	return func(t *TimeoutWriter) {
 		t.GinCtxCallBack = f

@@ -2,6 +2,8 @@ package timeout
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
 	"net/http"
@@ -9,9 +11,6 @@ import (
 	"net/url"
 	"testing"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestEncodeBytes(t *testing.T) {
