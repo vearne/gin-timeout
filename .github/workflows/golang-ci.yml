@@ -14,6 +14,9 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  GOFLAGS: -buildvcs=false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,7 +40,4 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: golangci-lint
-        run: golangci-lint run --modules-download-mode=mod
-        env:
-          GOLANGCI_LINT_RUN_BUILDVCS: false  # 使用环境变量
-    
+        run:  golangci-lint run --modules-download-mode=mod
