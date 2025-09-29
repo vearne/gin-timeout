@@ -36,5 +36,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: golangci-lint
         run: golangci-lint run --modules-download-mode=mod
+        env:
+          GOLANGCI_LINT_RUN_BUILDVCS: false  # 使用环境变量
+    
