@@ -3,13 +3,11 @@ package timeout
 import (
 	"context"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/vearne/gin-timeout/buffpool"
 	"net/http"
 	"runtime/debug"
 	"time"
-
-	"github.com/gin-gonic/gin"
-
-	"github.com/vearne/gin-timeout/buffpool"
 )
 
 var (
@@ -40,9 +38,12 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 
 		// sync.Pool
 		buffer := buffpool.GetBuff()
-		tw := &TimeoutWriter{body: buffer, ResponseWriter: cp.Writer,
-			h: make(http.Header)}
-		tw.TimeoutOptions = defaultOptions
+		tw := &TimeoutWriter{
+			body:           buffer,
+			ResponseWriter: cp.Writer,
+			h:              make(http.Header),
+			TimeoutOptions: defaultOptions,
+		}
 
 		// Loop through each option
 		for _, opt := range opts {
@@ -113,11 +114,8 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 		case <-finish:
 			tw.mu.Lock()
 			defer tw.mu.Unlock()
-			dst := tw.ResponseWriter.Header()
-			for k, vv := range tw.Header() {
-				dst[k] = vv
-			}
 
+			copyHeaders(tw.ResponseWriter.Header(), tw.Header())
 			if !tw.wroteHeader.Load() {
 				tw.code = c.Writer.Status()
 			}
@@ -131,6 +129,12 @@ func Timeout(opts ...Option) gin.HandlerFunc {
 			buffpool.PutBuff(buffer)
 		}
 
+	}
+}
+
+func copyHeaders(dst, src http.Header) {
+	for k, vv := range src {
+		dst[k] = vv
 	}
 }
 

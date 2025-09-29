@@ -23,7 +23,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.22
+          go-version: 1.24
       - name: remove dirs
         run: rm -rf example test
       - name: Test
@@ -32,9 +32,12 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: golangci/golangci-lint:v1.58.1
+      image: golangci/golangci-lint:v2.4.0
     steps:
       - name: checkout
         uses: actions/checkout@v4
       - name: golangci-lint
         run: golangci-lint run --modules-download-mode=mod
+        env:
+          GOLANGCI_LINT_RUN_BUILDVCS: false  # 使用环境变量
+    
